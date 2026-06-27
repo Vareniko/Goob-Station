@@ -12,9 +12,9 @@ trait-night-vision-name = Адаптовані очі
 trait-night-vision-desc = З якихось причин ваші очі краще адаптовані до темряви.
 
 trait-high-pain-tolerance-name = Висока толерантність до болю
-trait-high-pain-tolerance-desc = Ви переносите болі краще, ніж інші представники вашого виду.
+trait-high-pain-tolerance-desc = Ви впадаєте в критичний стан при 110 пошкодженнях.
 trait-low-pain-tolerance-name = Низька толерантність до болю
-trait-low-pain-tolerance-desc = Ви переносите болі гірше, ніж інші представники вашого виду.
+trait-low-pain-tolerance-desc = Ви впадаєте в критичний стан при 90 пошкодженнях.
 
 trait-pirate-lightweight-name = Легковаговик
 trait-pirate-lightweight-desc = Ви важете меньше, ніж інші представники вашого виду. Вас легше підняти, кидати та тягнути.
@@ -35,3 +35,6 @@ trait-psionic-desc = Ваш розум і душа відкриті для но�
 
 trait-unborgable-name = Несумісність боргофікації
 trait-unborgable-desc = Ваш мозок не можна використати для боргофікації.
+
+trait-smoke-sensitivity-name = Гіперчутливість легень
+trait-smoke-sensitivity-desc = Ваші легені надзвичайно чутливі до диму та пари в повітрі. Навіть незначна їх кількість викликає у вас кашель і дискомфорт при диханні.

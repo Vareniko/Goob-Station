@@ -227,7 +227,7 @@
     - _Pirate/Ghosts/luciusGG.rsi
   alpha: 1
   ghostName: luciusGG
-  ghostDescription: "Чи немає в тобі жаги до справедливості?"
+  ghostDescription: Це приватний опис. Ну серйозно, не соромно це читати? Відвернися, йди звідси й зроби вигляд, що ти цього не бачив :<
 
 - type: customGhost
   id: hattratt-ghost
@@ -328,7 +328,7 @@
     - _Pirate/Ghosts/Narinder.rsi
   alpha: 0.8
   ghostName: "Narinder"
-  ghostDescription: "неко-інженер якого не зупинила смерть від продовження роботи , чомусь ви відчуваєте тепло та запах металу з кавою поруч з ним. RIG на спині показує незький рівень здоровя"
+  ghostDescription: "неко-інженер якого не зупинила смерть від продовження роботи, чомусь ви відчуваєте тепло та запах металу з кавою поруч з ним. RIG на спині показує незький рівень здоровя"
 
 - type: customGhost
   id: hhhhhhhhruo-ghost
@@ -338,3 +338,30 @@
   alpha: 1
   ghostName: hhhhhhhhruo
   ghostDescription: лютий хард РПешер
+
+- type: customGhost
+  id: Bukhhalter-ghost
+  ckey: Bukhhalter
+  sprite:
+    - _Pirate/Ghosts/Bukhhalter.rsi
+  alpha: 1
+  ghostName: Ітан Лі
+  ghostDescription: От і догрався
+
+- type: customGhost
+  id: zubr-ghost
+  ckey: zubr
+  sprite:
+    - _Pirate/Ghosts/zubr.rsi
+  alpha: 1
+  ghostName: Tony [Zubr]
+  ghostDescription: I fucking hate these people. This party sucks.
+
+- type: customGhost
+  id: question-ghost
+  ckey: The_Question
+  sprite:
+    - _Pirate/Ghosts/The_Question.rsi
+  alpha: 1
+  ghostName: The_Question
+  ghostDescription: I have a questions

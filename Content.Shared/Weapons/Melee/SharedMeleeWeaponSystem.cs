@@ -127,6 +127,7 @@ using Content.Goobstation.Common.CCVar;
 using Content.Goobstation.Common.MartialArts;
 using Content.Goobstation.Common.Weapons; // Goobstation - Martial Arts
 using Content.Shared._EinsteinEngines.Contests;
+using Content.Shared._Pirate.Weapons.Melee.Events;
 using Content.Shared.ActionBlocker;
 using Content.Shared.Actions.Events;
 using Content.Shared.Administration.Components;
@@ -138,6 +139,7 @@ using Content.Shared.Damage.Systems;
 using Content.Shared.Database;
 using Content.Goobstation.Maths.FixedPoint;
 using Content.Shared._Lavaland.Weapons;
+using Content.Shared._Shitcode.Heretic.Components;
 using Content.Shared._Shitmed.Targeting;
 using Content.Shared.Coordinates;
 using Content.Shared.Hands;
@@ -580,6 +582,18 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
                     return false;
                 }
 
+                // <Trauma>
+                if (TryComp(target, out TargetInteractionRelayComponent? relay) && relay.RelayMelee &&
+                    Exists(relay.RelayEntity) && relay.RelayEntity.Value != target)
+                {
+                    return AttemptAttack(user,
+                        weaponUid,
+                        weapon,
+                        new LightAttackEvent(GetNetEntity(relay.RelayEntity.Value), light.Weapon, light.Coordinates),
+                        session);
+                }
+                // </Trauma>
+
                 if (!Blocker.CanAttack(user, target, (weaponUid, weapon)))
                     return false;
 
@@ -601,6 +615,17 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
                     // Target was lightly attacked & deleted.
                     return false;
                 }
+
+                // <Trauma>
+                if (TryComp(target, out relay) && relay.RelayMelee && Exists(relay.RelayEntity))
+                {
+                    return AttemptAttack(user,
+                        weaponUid,
+                        weapon,
+                        new DisarmAttackEvent(GetNetEntity(relay.RelayEntity.Value), disarm.Coordinates),
+                        session);
+                }
+                // </Trauma>
 
                 if (!Blocker.CanAttack(user, target, (weaponUid, weapon), true))
                     return false;
@@ -735,7 +760,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         }
 
         // Goobstation start
-        var beforeEvent = new BeforeHarmfulActionEvent(user, HarmfulActionType.Harm);
+        var beforeEvent = new BeforeHarmfulActionEvent(user, HarmfulActionType.Harm, damage); // Pirate: katana
         RaiseLocalEvent(target.Value, beforeEvent);
         if (beforeEvent.Cancelled)
             return;
@@ -801,6 +826,13 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         if (damageResult?.GetTotal() > FixedPoint2.Zero)
         {
             DoDamageEffect(targets, user, targetXform);
+        }
+
+        // Pirate: Starlight post-hit event for features that need actually applied melee damage.
+        if (damageResult != null)
+        {
+            var afterHitEvent = new AfterMeleeHitEvent(targets, user, meleeUid, damageResult, null);
+            RaiseLocalEvent(meleeUid, afterHitEvent);
         }
     }
 
@@ -893,7 +925,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
                 continue;
 
             // Goobstation start
-            var beforeEvent = new BeforeHarmfulActionEvent(user, HarmfulActionType.Harm);
+            var beforeEvent = new BeforeHarmfulActionEvent(user, HarmfulActionType.Harm, damage); // Pirate: katana
             RaiseLocalEvent(entity, beforeEvent);
             if (beforeEvent.Cancelled)
                 continue;
@@ -988,6 +1020,13 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         if (appliedDamage.GetTotal() > FixedPoint2.Zero)
         {
             DoDamageEffect(targets, user, Transform(targets[0]));
+        }
+
+        // Pirate: Starlight post-hit event for features that need actually applied melee damage.
+        if (appliedDamage.GetTotal() > FixedPoint2.Zero)
+        {
+            var afterHitEvent = new AfterMeleeHitEvent(targets, user, meleeUid, appliedDamage, direction);
+            RaiseLocalEvent(meleeUid, afterHitEvent);
         }
 
         // goob edit - stunmeta

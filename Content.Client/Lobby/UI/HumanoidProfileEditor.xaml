@@ -19,11 +19,13 @@ SPDX-FileCopyrightText: 2025 Aiden <28298836+Aidenkrz@users.noreply.github.com>
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
+<!-- Pirate: port and modified DV traits UI -->
 <BoxContainer xmlns="https://spacestation14.io"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:humanoid="clr-namespace:Content.Client.Humanoid"
          xmlns:cc="clr-namespace:Content.Client.Administration.UI.CustomControls"
          xmlns:ui="clr-namespace:Content.Client.Lobby.UI"
+         xmlns:pirate="clr-namespace:Content.Client._Pirate.Traits.UI"
          HorizontalExpand="True">
         <!-- Left side -->
         <BoxContainer Orientation="Vertical" Margin="10 10 10 10" HorizontalExpand="True">
@@ -188,12 +190,18 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                         <BoxContainer Name="AntagList" Orientation="Vertical" />
                     </ScrollContainer>
                 </BoxContainer>
-                <BoxContainer Orientation="Vertical" Margin="10">
                     <!-- Traits -->
-                    <ScrollContainer VerticalExpand="True">
-                        <BoxContainer Name="TraitsList" Orientation="Vertical" />
+                    <!-- Pirate start: port and modified DV traits UI -->
+                    <pirate:TraitsTab Name="TraitsTab" />
+                    <!-- Pirate end: port and modified DV traits UI -->
+                <!-- Pirate: loadout -->
+                <BoxContainer Name="LoadoutsTab" Orientation="Vertical" Margin="10">
+                    <TabContainer Name="LoadoutSlotTabs" HorizontalExpand="True" VerticalExpand="True" />
+                    <ScrollContainer Name="LoadoutSidebarScroll" HorizontalExpand="True" VerticalExpand="True" HScrollEnabled="False">
+                        <BoxContainer Name="SelectedLoadoutsList" Orientation="Vertical" HorizontalExpand="True" Margin="5" />
                     </ScrollContainer>
                 </BoxContainer>
+                <!-- Pirate: loadout -->
                 <BoxContainer Name="MarkingsTab" Orientation="Vertical" Margin="10">
                     <!-- Markings -->
                     <ScrollContainer VerticalExpand="True">

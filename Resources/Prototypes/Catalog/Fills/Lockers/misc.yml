@@ -272,6 +272,8 @@
     children:
     - id: StrangePill
       prob: 0.15
+    - id: TippyTrumpMysteryPack # GoobStation
+      prob: 0.10
     # Tools
     - !type:NestedSelector
       tableId: MaintToolsTable
@@ -310,6 +312,9 @@
     containers:
       entity_storage: !type:NestedSelector
         tableId: MaintenanceLockerLoot
+  - type: Tag
+    tags:
+    - MaintenanceCloset
 
 - type: entity
   id: ClosetWallMaintenanceFilledRandom

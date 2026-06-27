@@ -197,6 +197,7 @@ namespace Content.Server.Database
         public DbSet<Poll> Polls { get; set; } = default!;
         public DbSet<PollOption> PollOptions { get; set; } = default!;
         public DbSet<PollVote> PollVotes { get; set; } = default!;
+        public DbSet<PollSeen> PollSeen { get; set; } = default!;
 
         //Pirate Changes
         public DbSet<PirateAdminHelpRating> PirateAdminHelpRatings { get; set; } = default!;
@@ -621,6 +622,23 @@ namespace Content.Server.Database
                 .HasIndex(v => new { v.PollId, v.PlayerUserId, v.PollOptionId })
                 .IsUnique();
 
+            modelBuilder.Entity<PollSeen>()
+                .HasOne(s => s.Poll)
+                .WithMany()
+                .HasForeignKey(s => s.PollId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PollSeen>()
+                .HasOne(s => s.Player)
+                .WithMany()
+                .HasForeignKey(s => s.PlayerUserId)
+                .HasPrincipalKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PollSeen>()
+                .HasIndex(s => new { s.PollId, s.PlayerUserId })
+                .IsUnique();
+
             //Pirate Changes Start
             modelBuilder.Entity<PirateAdminHelpRating>()
                 .HasOne(r => r.Player)
@@ -799,6 +817,27 @@ namespace Content.Server.Database
         /// Corresponding loadout prototype.
         /// </summary>
         public string LoadoutName { get; set; } = string.Empty;
+
+        #region Pirate: loadout
+        /// <summary>
+        /// Optional loadout tint stored as a hex color string from <see cref="Color.ToHex"/>.
+        /// </summary>
+        /// <remarks>
+        /// Parsed with <see cref="Color.FromHex(string)"/> and limited to 16 characters by <see cref="MaxLengthAttribute"/>.
+        /// </remarks>
+        [MaxLength(16)]
+        public string? CustomColorTint { get; set; }
+
+        /// <summary>
+        /// Optional custom display name overriding the item's default.
+        /// </summary>
+        public string? CustomName { get; set; }
+
+        /// <summary>
+        /// Optional custom description overriding the item's default.
+        /// </summary>
+        public string? CustomDescription { get; set; }
+        #endregion
 
         /*
          * Insert extra data here like custom descriptions or colors or whatever.

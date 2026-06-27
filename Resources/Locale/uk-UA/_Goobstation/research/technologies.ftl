@@ -44,3 +44,6 @@ research-technology-xenobiology = Ксенобіологічне обладна�
 research-technology-radio-music-communication = Радіомузичні комунікації
 research-technology-xenobag-holding = Блюспейсне ксенобіологічне обладнання
 research-technology-bluespace-munitions = Боєприпаси Блюспейсу
+research-technology-cloning = Біологічна реконструкція
+research-technology-xeno-compatibility = Ксено-сумісність
+research-technology-service-energy-chem = Органічний електросинтез

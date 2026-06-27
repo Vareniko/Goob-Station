@@ -52,6 +52,7 @@
     - CablesStatic
     - MaterialsStatic
     - LightsStatic
+    - LatheMiscStatic
     - PowerCellsStatic
     - ElectronicsStatic
     - MiscSignallersStatic
@@ -124,6 +125,8 @@
     #- SharedBoardsStatic Pirate removed
     - CargoBoardsStatic
     - CablesStatic
+    - PartsStatic
+    - LatheMiscStatic
     - PowerCellsStatic
     - MiningToolsStatic
     - MiscSignallersStatic
@@ -189,8 +192,10 @@
     - CircuitFloorsStatic
     - MedicalBoardsStatic
     - MedicalBoardsStaticGoob
+    - ChemistryStatic
     - ToolsStatic
     - PartsStatic
+    - LatheMiscStatic
     - AtmosStatic
     - CablesStatic
     - MaterialsStatic
@@ -220,6 +225,7 @@
     - EngineeringBoards
     - SharedBoards
     - ScienceBoards
+    - ScienceBoardsGoob
     - ShuttleBoards
     - ShuttleBoardsGoob
     - MedicalBoardsGoob
@@ -277,6 +283,7 @@
     - ServiceStatic
     - PowerCellsStatic
     - LatheMiscStatic
+    - PartsStatic
     - ChemistryStatic
     - TapeRecorderStatic
     - CondimentStatic
@@ -293,6 +300,8 @@
     - CameraBoards
     - ServiceTools
     - ServiceBoardsGoob # goob
+    - EntertainmentPack # goob
+    - BartendingPack # goob
     # Einstein Engines Packs
     - Translators
   - type: EmagLatheRecipes

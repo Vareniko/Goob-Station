@@ -156,14 +156,16 @@
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using Content.Client._Pirate.Lobby.UI.Loadouts; // Pirate: loadout
+using PirateWrapContainer = Content.Client._Pirate.UserInterface.Controls.WrapContainer; // Pirate: loadout
 using Content.Client.Humanoid;
 using Content.Client.Lobby.UI.Loadouts;
 using Content.Client.Lobby.UI.Roles;
+using Content.Client._Pirate.Traits.UI; // Pirate: port and modified DV traits UI
 using Content.Client.Message;
 using Content.Client.Players.PlayTimeTracking;
 using Content.Client.Sprite;
 using Content.Client.Stylesheets;
-using Content.Client.UserInterface.Controls; // Pirate - traits rework
 using Content.Client.UserInterface.Systems.Guidebook;
 using Content.Shared._Pirate.Contractors.Prototypes; // Pirate - port EE contractors
 using Content.Pirate.UIKit.UserInterface.Lobby; // Pirate - Alternative Jobs
@@ -225,6 +227,9 @@ namespace Content.Client.Lobby.UI
 
         // One at a time.
         private LoadoutWindow? _loadoutWindow;
+        private bool _showUnavailableLoadouts; // Pirate: loadout
+        private readonly Dictionary<(ProtoId<LoadoutGroupPrototype> Group, ProtoId<LoadoutPrototype> Loadout), List<LoadoutIconButton>> _loadoutIconButtons = new(); // Pirate: loadout
+        private readonly Dictionary<int, BoxContainer> _loadoutSidebarSlots = new(); // Pirate: loadout
 
         private bool _exporting;
         private bool _imaging;
@@ -303,6 +308,8 @@ namespace Content.Client.Lobby.UI
             _requirements = requirements;
             _controller = UserInterfaceManager.GetUIController<LobbyUIController>();
             _sprite = _entManager.System<SpriteSystem>();
+
+            LoadoutSlotTabs.OnTabChanged += MoveLoadoutSidebarToTab; // Pirate: loadout
 
             _maxNameLength = _cfgManager.GetCVar(CCVars.MaxNameLength);
             _allowFlavorText = _cfgManager.GetCVar(CCVars.FlavorText);
@@ -645,12 +652,14 @@ namespace Content.Client.Lobby.UI
             #endregion Jobs
 
             TabContainer.SetTabTitle(2, Loc.GetString("humanoid-profile-editor-antags-tab"));
+            TabContainer.SetTabTitle(3, Loc.GetString("trait-editor-title")); // Pirate: port and modified DV traits UI
+            TabContainer.SetTabTitle(4, Loc.GetString("loadout-window")); // Pirate: loadout
 
             RefreshTraits();
 
             #region Markings
 
-            TabContainer.SetTabTitle(4, Loc.GetString("humanoid-profile-editor-markings-tab"));
+            TabContainer.SetTabTitle(5, Loc.GetString("humanoid-profile-editor-markings-tab")); // Pirate: loadout
 
             Markings.OnMarkingAdded += OnMarkingChange;
             Markings.OnMarkingRemoved += OnMarkingChange;
@@ -684,6 +693,16 @@ namespace Content.Client.Lobby.UI
             };
 
             SpeciesInfoButton.OnPressed += OnSpeciesInfoButtonPressed;
+
+            // Pirate start: port and modified DV traits UI
+            TraitsTab.OnTraitsChanged += traits =>
+            {
+                if (Profile == null)
+                    return;
+                Profile = Profile.WithTraitPreferences(traits);
+                SetDirty();
+            };
+            // Pirate end: port and modified DV traits UI
 
             UpdateSpeciesGuidebookIcon();
             IsDirty = false;
@@ -723,500 +742,16 @@ namespace Content.Client.Lobby.UI
         /// <summary>
         /// Refreshes traits selector
         /// </summary>
+        // Pirate start: port and modified DV traits UI
         public void RefreshTraits()
-        {
-            TraitsList.DisposeAllChildren();
-
-            EnforceSpeciesTraitRestrictions(); // Pirate - Traits Rework
-
-            var traits = _prototypeManager.EnumeratePrototypes<TraitPrototype>().OrderBy(t => t.Cost).ToList(); // Pirate - Traits Rework
-            TabContainer.SetTabTitle(3, Loc.GetString("humanoid-profile-editor-traits-tab"));
-
-            if (traits.Count < 1)
-            {
-                TraitsList.AddChild(new Label
-                {
-                    Text = Loc.GetString("humanoid-profile-editor-no-traits"),
-                    FontColorOverride = Color.Gray,
-                });
-                return;
-            }
-
-            // Pirate - Traits Rework
-            // Dictionary to store category buttons - moved up before it's used
-            Dictionary<string, TraitCategoryButton> categoryButtons = new();
-
-            var clearAllButton = new ConfirmButton
-            {
-                Text = Loc.GetString("humanoid-profile-editor-clear-all-traits-button"),
-                ConfirmationText = Loc.GetString("humanoid-profile-editor-clear-all-traits-confirm"),
-                MinSize = new Vector2(0, 30)
-            };
-            clearAllButton.OnPressed += _ =>
-            {
-                if (Profile == null)
-                    return;
-
-                Profile = Profile.WithoutAllTraitPreferences();
-                SetDirty();
-                RefreshTraits();
-            };
-            TraitsList.AddChild(clearAllButton);
-
-            // Add expand/collapse all buttons
-            var expandCollapseButtons = new TraitExpandCollapseButtons();
-            expandCollapseButtons.OnExpandCollapseAll += expanded =>
-            {
-                // Set the static dictionary state
-                TraitCategoryButton.SetAllExpanded(expanded);
-
-                // Update all visible category buttons
-                foreach (var button in categoryButtons.Values)
-                {
-                    button.SetExpanded(expanded);
-                }
-            };
-            TraitsList.AddChild(expandCollapseButtons);
-            // Pirate end - Traits Rework
-
-            // Setup model
-            Dictionary<string, List<string>> traitGroups = new();
-            List<string> defaultTraits = new();
-            traitGroups.Add(TraitCategoryPrototype.Default, defaultTraits);
-
-            var allSelectors = new Dictionary<ProtoId<TraitPrototype>, TraitPreferenceSelector>(); // Pirate - Traits Rework
-
-            foreach (var trait in traits)
-            {
-                // Pirate removal start
-                /* Begin Goobstation: ported from DeltaV - Species trait exclusion
-                if (Profile?.Species is { } selectedSpecies && (trait.ExcludedSpecies.Contains(selectedSpecies) ||
-                    trait.IncludedSpecies.Count > 0 && !trait.IncludedSpecies.Contains(selectedSpecies)))
-                {
-                    Profile = Profile?.WithoutTraitPreference(trait.ID, _prototypeManager);
-                    continue;
-                }
-                */// End Goobstation: ported from DeltaV - Species trait exclusion
-                // Pirate removal end
-
-                if (trait.Category == null)
-                {
-                    defaultTraits.Add(trait.ID);
-                    continue;
-                }
-
-                if (!_prototypeManager.HasIndex(trait.Category))
-                    continue;
-
-                var group = traitGroups.GetOrNew(trait.Category);
-                group.Add(trait.ID);
-            }
-
-            // Create UI view from model
-            foreach (var (categoryId, categoryTraits) in traitGroups)
-            {
-                // Pirate start - Traits Rework
-                // Skip the default category if it has no traits
-                if (categoryId == TraitCategoryPrototype.Default && categoryTraits.Count == 0)
-                    continue;
-
-                string categoryName;
-                int? maxTraitPoints = null;
-                TraitCategoryPrototype? category = null;
-
-                if (categoryId != TraitCategoryPrototype.Default)
-                {
-                    category = _prototypeManager.Index<TraitCategoryPrototype>(categoryId);
-                    categoryName = Loc.GetString(category.Name);
-                    maxTraitPoints = category.MaxTraitPoints;
-                }
-                else
-                {
-                    categoryName = Loc.GetString("humanoid-profile-editor-traits-default-category");
-                }
-
-                categoryTraits.Sort((a, b) =>
-                {
-                    var traitA = _prototypeManager.Index<TraitPrototype>(a);
-                    var traitB = _prototypeManager.Index<TraitPrototype>(b);
-
-                    var costCompare = traitA.Cost.CompareTo(traitB.Cost);
-                    if (costCompare != 0)
-                        return costCompare;
-
-                    var traitNameA = Loc.GetString(traitA.Name);
-                    var traitNameB = Loc.GetString(traitB.Name);
-                    return string.Compare(traitNameA, traitNameB, StringComparison.CurrentCulture);
-                });
-
-                // Create category button
-                var categoryButton = new TraitCategoryButton(categoryName);
-                categoryButtons[categoryId] = categoryButton;
-                TraitsList.AddChild(categoryButton);
-                // Pirate end - Traits Rework
-
-                List<TraitPreferenceSelector?> selectors = new();
-                var selectionCount = 0;
-
-                // First pass: calculate current points and create selectors
-                foreach (var traitProto in categoryTraits)
-                {
-                    var trait = _prototypeManager.Index<TraitPrototype>(traitProto);
-                    var selector = new TraitPreferenceSelector(trait);
-
-                    selector.Preference = Profile?.TraitPreferences.Contains(trait.ID) == true;
-                    if (selector.Preference)
-                        selectionCount += trait.Cost;
-
-                    // Pirate start - Traits Rework
-                    {
-                        var tooltipParts = new List<string>();
-                        if (trait.Description is { } tdesc)
-                        {
-                            var descText = Loc.GetString(tdesc);
-                            tooltipParts.Add(descText);
-                        }
-
-                        if (trait.MutuallyExclusiveTraits.Count > 0)
-                        {
-                            var names = new List<string>();
-                            foreach (var exId in trait.MutuallyExclusiveTraits)
-                            {
-                                if (_prototypeManager.TryIndex(exId, out var exProto))
-                                    names.Add($"[color=#ADD8E6]{Loc.GetString(exProto.Name)}[/color]");
-                            }
-                            if (names.Count > 0)
-                            {
-                                var exclusiveText = $"You must not have one of these traits: {string.Join(", ", names)}";
-                                tooltipParts.Add(exclusiveText);
-                            }
-                        }
-
-                        if (trait.SpeciesBlacklist.Count > 0)
-                        {
-                            var names = new List<string>();
-                            foreach (var speciesId in trait.SpeciesBlacklist)
-                            {
-                                if (_prototypeManager.TryIndex(speciesId, out var speciesProto))
-                                {
-                                    var speciesName = Loc.GetString(speciesProto.Name);
-                                    names.Add($"[color=#087209]{speciesName}[/color]");
-                                }
-                            }
-                            if (names.Count > 0)
-                            {
-                                var blacklistText = $"You must not be: {string.Join(", ", names)}";
-                                tooltipParts.Add(blacklistText);
-                            }
-                        }
-
-                        if (tooltipParts.Count > 0)
-                        {
-                            var fullTooltip = string.Join("\n", tooltipParts);
-                            selector.SetTooltip(fullTooltip);
-                        }
-                    }
-
-                    // Hide trait if current species is in the blacklist
-                    if (Profile?.Species is { } currentSpecies && trait.SpeciesBlacklist.Contains(currentSpecies))
-                    {
-                        selector.Visible = false;
-                    }
-
-                    allSelectors[trait.ID] = selector;
-
-                    selector.PreferenceChanged += preference =>
-                    {
-                        if (preference)
-                        {
-                            // Calculate current points for this category before adding the new trait
-                            var currentPoints = 0;
-                            if (category != null && category.MaxTraitPoints >= 0)
-                            {
-                                foreach (var existingTraitId in Profile?.TraitPreferences ?? new HashSet<ProtoId<TraitPrototype>>())
-                                {
-                                    if (!_prototypeManager.TryIndex<TraitPrototype>(existingTraitId, out var existingProto))
-                                        continue;
-
-                                    if (existingProto.Category == categoryId)
-                                        currentPoints += existingProto.Cost;
-                                }
-
-                                // Check if adding this trait would exceed the maximum points
-                                if (currentPoints + trait.Cost > category.MaxTraitPoints)
-                                {
-                                    // Reset the selection without triggering the event
-                                    selector.Preference = false;
-                                    return;
-                                }
-                            }
-
-                            var oldProfile = Profile;
-                            Profile = Profile?.WithTraitPreference(trait.ID, _prototypeManager);
-
-                            // If the profile didn't change, it means the trait couldn't be added (e.g., due to point limits)
-                            if (Profile == oldProfile)
-                            {
-                                // Reset the selection without triggering the event
-                                selector.Preference = false;
-                                return;
-                            }
-                            // Pirate end - Traits Rework
-                        }
-                        else
-                        {
-                            Profile = Profile?.WithoutTraitPreference(trait.ID, _prototypeManager);
-                        }
-
-                        SetDirty();
-                        // Pirate start - Traits Rework
-                        UpdateTraitIncompatibilityVisibility(allSelectors);
-
-                        // Instead of refreshing the entire UI, just update the point counter if needed
-                        if (category is { MaxTraitPoints: >= 0 })
-                        {
-                            // Recalculate points for this category
-                            var currentPoints = 0;
-                            foreach (var traitId in Profile?.TraitPreferences ?? new HashSet<ProtoId<TraitPrototype>>())
-                            {
-                                if (!_prototypeManager.TryIndex<TraitPrototype>(traitId, out var proto))
-                                    continue;
-
-                                if (proto.Category == category.ID)
-                                    currentPoints += proto.Cost;
-                            }
-
-                            // Find and update the point counter label
-                            if (categoryButton.TraitsContainer.ChildCount >= 2)
-                            {
-                                var maxPoints = category.MaxTraitPoints.Value;
-                                float pointsLeft = Math.Max(0, maxPoints - currentPoints);
-                                if (categoryButton.TraitsContainer.GetChild(0) is ProgressBar progressBar)
-                                {
-                                    progressBar.Value = pointsLeft;
-                                    float percentRemaining = pointsLeft / maxPoints;
-
-                                    Color barColor;
-
-                                    if (percentRemaining > 0.5f)
-                                    {
-                                        barColor = Color.FromHex("#33FF33");
-                                    }
-                                    else if (percentRemaining > 0.25f)
-                                    {
-                                        barColor = Color.FromHex("#FFFF33");
-                                    }
-                                    else
-                                    {
-                                        barColor = Color.FromHex("#FF3333");
-                                    }
-
-                                    if (progressBar.ForegroundStyleBoxOverride is StyleBoxFlat styleBox)
-                                    {
-                                        styleBox.BackgroundColor = barColor;
-                                    }
-                                }
-
-                                if (categoryButton.TraitsContainer.GetChild(1) is Label pointsLabel)
-                                {
-                                    pointsLabel.Text = Loc.GetString("humanoid-profile-editor-trait-count-hint",
-                                        ("current", pointsLeft),
-                                        ("max", category.MaxTraitPoints));
-                                }
-                            }
-
-                            // Update all trait colors based on the new point total
-                            RefreshTraitColors(categoryButton, category, currentPoints);
-                        }
-                        // Pirate end - Traits Rework
-                    };
-                    selectors.Add(selector);
-                }
-
-                // Selection counter
-                if (category is { MaxTraitPoints: >= 0 })
-                {
-                    // Pirate start - Traits Rework
-                    var maxPoints = category.MaxTraitPoints.Value;
-                    var progressBar = new ProgressBar
-                    {
-                        MinHeight = 4,
-                        SetHeight = 4f,
-                        MinValue = 0,
-                        MaxValue = maxPoints,
-                        Value = maxPoints - selectionCount,
-                        Margin = new Thickness(0, 0, 0, 2)
-                    };
-
-                    float pointsLeft = Math.Max(0, maxPoints - selectionCount);
-                    float percentRemaining = pointsLeft / maxPoints;
-
-                    Color barColor;
-                    if (percentRemaining > 0.5f)
-                    {
-                        barColor = Color.FromHex("#33FF33");
-                    }
-                    else if (percentRemaining > 0.25f)
-                    {
-                        barColor = Color.FromHex("#FFFF33");
-                    }
-                    else
-                    {
-                        barColor = Color.FromHex("#FF3333");
-                    }
-
-                    progressBar.ForegroundStyleBoxOverride = new StyleBoxFlat
-                    {
-                        BackgroundColor = barColor,
-                    };
-
-                    categoryButton.AddTrait(progressBar);
-
-                    categoryButton.AddTrait(new Label
-                    {
-                        Text = Loc.GetString("humanoid-profile-editor-trait-count-hint", ("current", pointsLeft), ("max", category.MaxTraitPoints)),
-                        FontColorOverride = Color.Green
-                        // Pirate end - Traits Rework
-                    });
-                }
-
-                // Second pass: add selectors to UI with appropriate colors
-                foreach (var selector in selectors)
-                {
-                    if (selector == null)
-                        continue;
-
-                    // Pirate start - Traits Rework
-                    // Color traits red if they would exceed the point limit
-                    if (category is { MaxTraitPoints: >= 0 })
-                    {
-                        // If this trait would exceed the limit when added to current selection
-                        if (!selector.Preference && selector.Cost + selectionCount > category.MaxTraitPoints)
-                        {
-                            selector.SetUnavailable(true);
-                        }
-                        // If this trait is already selected but would exceed the limit if added now
-                        else if (selector.Preference && selectionCount > category.MaxTraitPoints)
-                        {
-                            // This shouldn't happen normally, but just in case
-                            selector.SetUnavailable(true);
-                        }
-                    }
-
-                    categoryButton.AddTrait(selector);
-                }
-
-            }
-
-            // Update trait visibility after all selectors are created
-            UpdateTraitIncompatibilityVisibility(allSelectors);
-        }
-
-        // Helper method to refresh trait colors when points change
-        private void RefreshTraitColors(TraitCategoryButton categoryButton, TraitCategoryPrototype category, int currentPoints)
-        {
-            // Skip the first child which is the points label
-            for (int i = 1; i < categoryButton.TraitsContainer.ChildCount; i++)
-            {
-                if (categoryButton.TraitsContainer.GetChild(i) is TraitPreferenceSelector selector)
-                {
-                    // Reset color
-                    selector.TraitButton.ModulateSelfOverride = null;
-                    selector.SetUnavailable(false);
-
-                    // If this trait would exceed the limit when added to current selection
-                    if (!selector.Preference && selector.Cost + currentPoints > category.MaxTraitPoints)
-                    {
-                        selector.SetUnavailable(true);
-                    }
-                    // Enable traits that can now be selected
-                    else if (!selector.Preference && selector.Cost + currentPoints <= category.MaxTraitPoints)
-                    {
-                        selector.SetUnavailable(false);
-                    }
-                }
-            }
-        }
-
-        private void UpdateTraitIncompatibilityVisibility(Dictionary<ProtoId<TraitPrototype>, TraitPreferenceSelector> allSelectors)
-        {
-            var selected = Profile?.TraitPreferences ?? new HashSet<ProtoId<TraitPrototype>>();
-            var currentSpecies = Profile?.Species;
-
-            foreach (var (traitId, selector) in allSelectors)
-            {
-                var hide = false;
-
-                if (!_prototypeManager.TryIndex<TraitPrototype>(traitId, out var thisProto))
-                {
-                    selector.Visible = false;
-                    continue;
-                }
-
-                // Check species blacklist first, even for selected traits
-                if (currentSpecies != null)
-                {
-                    ProtoId<SpeciesPrototype> speciesId = currentSpecies.Value;
-                    if (thisProto.SpeciesBlacklist.Contains(speciesId))
-                    {
-                        hide = true;
-                    }
-                }
-
-                // If trait is selected, keep it visible unless it's species-blacklisted
-                if (selected.Contains(traitId) && !hide)
-                {
-                    selector.Visible = true;
-                    continue;
-                }
-
-                if (!hide)
-                {
-                    foreach (var sel in selected)
-                    {
-                        if (!_prototypeManager.TryIndex<TraitPrototype>(sel, out var selProto))
-                            continue;
-
-                        if (selProto.MutuallyExclusiveTraits.Contains(traitId) || thisProto.MutuallyExclusiveTraits.Contains(sel))
-                        {
-                            hide = true;
-                        }
-                    }
-                }
-
-                selector.Visible = !hide;
-            }
-        }
-        private void EnforceSpeciesTraitRestrictions()
         {
             if (Profile == null)
                 return;
 
-            var species = Profile.Species;
-            var toRemove = new List<ProtoId<TraitPrototype>>();
-
-            foreach (var traitId in Profile.TraitPreferences)
-            {
-                if (!_prototypeManager.TryIndex(traitId, out TraitPrototype? trait))
-                    continue;
-
-                if (trait.SpeciesBlacklist.Contains(species))
-                {
-                    toRemove.Add(traitId);
-                }
-            }
-
-            foreach (var traitId in toRemove)
-            {
-                Profile = Profile.WithoutTraitPreference(traitId, _prototypeManager);
-            }
-
-            if (toRemove.Count > 0)
-            {
-                SetDirty();
-            }
+            TraitsTab.SetSelectedTraits(Profile.TraitPreferences);
+            TraitsTab.UpdateConditions(Profile);
         }
-        // Pirate end
+        // Pirate end: port and modified DV traits UI
 
         /// <summary>
         /// Refreshes the species selector.
@@ -1415,6 +950,7 @@ namespace Content.Client.Lobby.UI
                 selector.OnSelected += preference =>
                 {
                     Profile = Profile?.WithAntagPreference(antag.ID, preference == 0);
+                    RefreshTraits(); // Pirate: port and modified DV traits UI
                     SetDirty();
                 };
 
@@ -1477,7 +1013,709 @@ namespace Content.Client.Lobby.UI
         public void RefreshLoadouts()
         {
             _loadoutWindow?.Dispose();
+            #region Pirate: loadout
+            LoadoutSidebarScroll.Orphan();
+            _loadoutSidebarSlots.Clear();
+            LoadoutSlotTabs.DisposeAllChildren();
+            SelectedLoadoutsList.DisposeAllChildren();
+            _loadoutIconButtons.Clear();
+
+            if (Profile == null || _playerManager.LocalSession == null)
+                return;
+
+            var collection = IoCManager.Instance;
+            if (collection == null)
+                return;
+
+            var choices = CollectLoadoutChoices(collection);
+            var categoryTabs = CreateLoadoutCategoryTabs();
+            var loadoutSystem = _entManager.System<LoadoutSystem>();
+
+            foreach (var category in categoryTabs.Keys)
+            {
+                var categoryChoices = choices.Values
+                    .Where(choice => choice.Category == category)
+                    .Where(ShouldShowCombinedLoadout)
+                    .OrderBy(choice => loadoutSystem.GetName(choice.Prototype))
+                    .ToList();
+
+                AddLoadoutChoiceSections(categoryTabs[category], categoryChoices, CombinedLoadoutKind.Job, loadoutSystem);
+                AddLoadoutChoiceSections(categoryTabs[category], categoryChoices, CombinedLoadoutKind.Generic, loadoutSystem);
+            }
+
+            RefreshSelectedLoadoutsList(choices, loadoutSystem);
+            #endregion
         }
+
+        #region Pirate: loadout
+        private static readonly HashSet<ProtoId<LoadoutGroupPrototype>> AbsorbedLoadoutGroups = new()
+        {
+            "Trinkets",
+            "PassengerFace",
+            "PassengerGloves",
+            "PiratePassengerJumpsuit",
+            "PiratePassengerHead",
+            "PiratePassengerNeck",
+            "PiratePassengerOuterClothing",
+            "PiratePassengerShoes",
+        };
+
+        private Dictionary<ProtoId<LoadoutPrototype>, CombinedLoadoutChoice> CollectLoadoutChoices(IDependencyCollection collection)
+        {
+            var result = new Dictionary<ProtoId<LoadoutPrototype>, CombinedLoadoutChoice>();
+
+            if (Profile == null || _playerManager.LocalSession == null)
+                return result;
+
+            var activeRoleIds = GetActiveLoadoutRoleIds();
+            var roleIds = activeRoleIds;
+
+            foreach (var roleId in roleIds)
+            {
+                if (!_prototypeManager.TryIndex<RoleLoadoutPrototype>(roleId, out var roleLoadoutProto))
+                    continue;
+
+                var active = activeRoleIds.Contains(roleId);
+                var roleLoadout = Profile
+                    .GetLoadoutOrDefault(roleId, _playerManager.LocalSession, Profile.Species, _entManager, _prototypeManager)
+                    .Clone();
+
+                roleLoadout.EnsureValid(Profile, _playerManager.LocalSession, collection);
+
+                var shownGroups = new HashSet<ProtoId<LoadoutGroupPrototype>>();
+                foreach (var groupId in roleLoadoutProto.Groups.Concat(GlobalLoadoutGroups.Groups)) // Pirate: loadout
+                {
+                    if (AbsorbedLoadoutGroups.Contains(groupId) ||
+                        !shownGroups.Add(groupId) ||
+                        !_prototypeManager.TryIndex(groupId, out LoadoutGroupPrototype? groupProto) ||
+                        groupProto.Hidden)
+                        continue;
+
+                    var category = GetLoadoutGroupCategory(groupProto);
+                    if (!CreateLoadoutCategoryNames().Contains(category))
+                        category = "Items";
+
+                    var selected = roleLoadout.SelectedLoadouts.GetValueOrDefault(groupId);
+                    var generic = GlobalLoadoutGroups.Groups.Contains(groupId);
+
+                    foreach (var loadoutId in groupProto.GetAllLoadouts(_prototypeManager).Distinct())
+                    {
+                        if (!_prototypeManager.TryIndex(loadoutId, out LoadoutPrototype? loadoutProto))
+                            continue;
+
+                        if (!result.TryGetValue(loadoutId, out var choice))
+                        {
+                            choice = new CombinedLoadoutChoice(loadoutProto, category);
+                            result[loadoutId] = choice;
+                        }
+
+                        var enabled = roleLoadout.IsValid(Profile, _playerManager.LocalSession, loadoutId, collection, out var reason);
+                        var selectedLoadout = selected?.FirstOrDefault(loadout => loadout.Prototype == loadoutId); // Pirate: loadout
+                        var selectedInGroup = active && selectedLoadout != null; // Pirate: loadout
+                        choice.Locations.Add(new CombinedLoadoutLocation(roleId, groupId, active, enabled, selectedInGroup, generic, reason, selectedLoadout?.CustomColorTint, selectedLoadout?.CustomName, selectedLoadout?.CustomDescription)); // Pirate: loadout
+                        choice.Selected |= selectedInGroup;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private HashSet<string> GetActiveLoadoutRoleIds()
+        {
+            if (Profile == null)
+                return new HashSet<string>();
+
+            var highPriorityJob = Profile.JobPriorities.FirstOrDefault(priority => priority.Value == JobPriority.High).Key;
+            var jobId = highPriorityJob.Id ?? SharedGameTicker.FallbackOverflowJob;
+            var roleId = LoadoutSystem.GetJobPrototype(jobId);
+
+            return _prototypeManager.HasIndex<RoleLoadoutPrototype>(roleId)
+                ? new HashSet<string> { roleId }
+                : new HashSet<string>();
+        }
+
+        private bool ShouldShowCombinedLoadout(CombinedLoadoutChoice choice)
+        {
+            return choice.Enabled || choice.Selected || _showUnavailableLoadouts;
+        }
+
+        private bool ShouldShowCombinedLoadoutLocation(CombinedLoadoutLocation location)
+        {
+            return location.Enabled || location.Selected || _showUnavailableLoadouts;
+        }
+
+        private void AddLoadoutChoiceSections(
+            BoxContainer categoryBody,
+            List<CombinedLoadoutChoice> choices,
+            CombinedLoadoutKind kind,
+            LoadoutSystem loadoutSystem)
+        {
+            var groupIds = choices
+                .SelectMany(choice => choice.Locations)
+                .Where(location => location.Active && location.Kind == kind)
+                .Where(ShouldShowCombinedLoadoutLocation)
+                .Select(location => location.Group)
+                .Distinct()
+                .ToList();
+
+            var sections = new List<CombinedLoadoutSection>();
+            foreach (var groupId in groupIds)
+            {
+                if (!_prototypeManager.TryIndex(groupId, out LoadoutGroupPrototype? group))
+                    continue;
+
+                var sectionChoices = choices
+                    .Where(choice => choice.Locations.Any(location =>
+                        location.Active &&
+                        location.Group == groupId &&
+                        ShouldShowCombinedLoadoutLocation(location)))
+                    .OrderBy(choice => loadoutSystem.GetName(choice.Prototype))
+                    .ToList();
+
+                if (sectionChoices.Count == 0)
+                    continue;
+
+                sections.Add(new CombinedLoadoutSection(groupId, $"{Loc.GetString(group.Name)}: {group.MaxLimit}", sectionChoices));
+            }
+
+            foreach (var section in sections.OrderBy(section => section.Title))
+            {
+                AddLoadoutChoiceSection(categoryBody, section, loadoutSystem);
+            }
+        }
+
+        private void AddLoadoutChoiceSection(
+            BoxContainer categoryBody,
+            CombinedLoadoutSection section,
+            LoadoutSystem loadoutSystem)
+        {
+            var visibleChoices = section.Choices;
+            if (visibleChoices.Count == 0)
+                return;
+
+            categoryBody.AddChild(new Label
+            {
+                Text = section.Title,
+                Margin = new Thickness(5, 6, 5, 4),
+            });
+
+            var iconRows = new PirateWrapContainer // Pirate: loadout
+            {
+                SeparationOverride = 6,
+                Margin = new Thickness(5, 0, 5, 8),
+                HorizontalExpand = true,
+            };
+
+            foreach (var choice in visibleChoices)
+            {
+                var enabled = choice.IsEnabledForGroup(section.Group);
+                var icon = new LoadoutIconButton(choice.Prototype, loadoutSystem.GetName(choice.Prototype), choice.CustomColorForGroup(section.Group), enabled ? null : choice.ReasonForGroup(section.Group)) // Pirate: loadout
+                {
+                    Disabled = !enabled,
+                    Pressed = choice.IsSelectedInGroup(section.Group),
+                };
+
+                icon.OnPressed += args => SetCombinedLoadout(choice, args.Button.Pressed, section.Group);
+                icon.OnCustomizePressed += (defName, defDesc) => OpenLoadoutCustomize(choice, section.Group, loadoutSystem.GetName(choice.Prototype), defName, defDesc); // Pirate: loadout
+                iconRows.AddChild(icon);
+                RegisterLoadoutIconButton(section.Group, choice.Prototype.ID, icon);
+            }
+
+            categoryBody.AddChild(iconRows);
+        }
+
+        private void RegisterLoadoutIconButton(ProtoId<LoadoutGroupPrototype> group, ProtoId<LoadoutPrototype> loadout, LoadoutIconButton icon)
+        {
+            var key = (group, loadout);
+            if (!_loadoutIconButtons.TryGetValue(key, out var buttons))
+            {
+                buttons = new List<LoadoutIconButton>();
+                _loadoutIconButtons[key] = buttons;
+            }
+
+            buttons.Add(icon);
+        }
+
+        private void RefreshDisplayedLoadoutState(IDependencyCollection collection)
+        {
+            var choices = CollectLoadoutChoices(collection);
+            var loadoutSystem = _entManager.System<LoadoutSystem>();
+
+            foreach (var choice in choices.Values)
+            {
+                foreach (var location in choice.Locations.Where(location => location.Active))
+                {
+                    if (!_loadoutIconButtons.TryGetValue((location.Group, choice.Prototype.ID), out var buttons))
+                        continue;
+
+                    foreach (var button in buttons)
+                    {
+                        button.Disabled = !location.Enabled;
+                        button.Pressed = location.Selected;
+                    }
+                }
+            }
+
+            RefreshSelectedLoadoutsList(choices, loadoutSystem);
+        }
+
+        private void SetCombinedLoadout(CombinedLoadoutChoice choice, bool selected, ProtoId<LoadoutGroupPrototype>? group = null)
+        {
+            if (Profile == null || _playerManager.LocalSession == null)
+                return;
+
+            var collection = IoCManager.Instance;
+            if (collection == null)
+                return;
+
+            var updated = Profile;
+            var touched = new HashSet<(string Role, ProtoId<LoadoutGroupPrototype> Group)>();
+
+            var activeLocations = choice.Locations
+                .Where(location => location.Active)
+                .Where(location => group == null || location.Group == group.Value)
+                .ToList();
+
+            foreach (var location in selected ? activeLocations.Where(location => location.Enabled).Take(1) : activeLocations)
+            {
+                if (selected && !location.Enabled)
+                    continue;
+
+                if (!touched.Add((location.Role, location.Group)))
+                    continue;
+
+                var roleLoadout = updated.Loadouts.TryGetValue(location.Role, out var existing)
+                    ? existing.Clone()
+                    : new RoleLoadout(location.Role);
+
+                if (!roleLoadout.SelectedLoadouts.TryGetValue(location.Group, out var groupLoadouts))
+                {
+                    groupLoadouts = new List<Loadout>();
+                    roleLoadout.SelectedLoadouts[location.Group] = groupLoadouts;
+                }
+
+                var alreadySelected = groupLoadouts.Any(loadout => loadout.Prototype == choice.Prototype.ID);
+
+                if (selected == alreadySelected)
+                    continue;
+
+                if (selected)
+                    RemoveConflictingLoadouts(roleLoadout, choice.Prototype);
+
+                if (selected)
+                    roleLoadout.AddLoadout(location.Group, choice.Prototype.ID, _prototypeManager);
+                else
+                    roleLoadout.RemoveLoadout(location.Group, choice.Prototype.ID, _prototypeManager);
+
+                updated = updated.WithLoadout(roleLoadout);
+            }
+
+            Profile = updated;
+            SetDirty();
+            if (_showUnavailableLoadouts)
+                RefreshDisplayedLoadoutState(collection);
+            else
+                RefreshLoadouts();
+            ReloadPreview();
+        }
+
+        #region Pirate: loadout
+        private void OpenLoadoutCustomize(CombinedLoadoutChoice choice, ProtoId<LoadoutGroupPrototype> group, string loadoutTitle, string defaultName, string defaultDescription)
+        {
+            var currentName = choice.CustomNameForGroup(group) ?? defaultName;
+            var currentDescription = choice.CustomDescriptionForGroup(group) ?? defaultDescription;
+
+            // Only offer the color picker for items that support tinting.
+            Color? color = choice.Prototype.CustomColorTint
+                ? Color.FromHex(choice.CustomColorForGroup(group), Color.White)
+                : null;
+
+            var window = new LoadoutCustomizeWindow(loadoutTitle, currentName, currentDescription, color);
+            window.OnSubmitted += (name, description, pickedColor) =>
+                SetCombinedLoadoutCustomization(choice, group, name, description, pickedColor, defaultName, defaultDescription);
+
+            if (color != null)
+            {
+                var savedColor = color.Value;
+                // Live preview while dragging; revert to the saved color if the dialog is closed without applying.
+                window.OnColorPreview += previewColor => PreviewLoadoutColor(choice, group, previewColor);
+                window.OnReverted += () => PreviewLoadoutColor(choice, group, savedColor);
+            }
+
+            window.OpenCentered();
+        }
+
+        // Re-tints the loadout's icon and its equipped item on the character preview in place, without
+        // touching the profile. Used for immediate color feedback; the value is only persisted on apply.
+        private void PreviewLoadoutColor(CombinedLoadoutChoice choice, ProtoId<LoadoutGroupPrototype> group, Color color)
+        {
+            if (_loadoutIconButtons.TryGetValue((group, choice.Prototype.ID), out var buttons))
+            {
+                var hex = color.ToHex();
+                foreach (var button in buttons)
+                    button.SetCustomColor(hex);
+            }
+
+            // Only tint the character when this loadout is actually equipped on the preview.
+            if (!choice.IsSelectedInGroup(group) || !_entManager.EntityExists(PreviewDummy))
+                return;
+
+            var inventory = _entManager.System<Content.Shared.Inventory.InventorySystem>();
+            var tint = _entManager.System<Content.Client._Pirate.Loadouts.LoadoutTintSystem>();
+            foreach (var slot in choice.Prototype.Equipment.Keys)
+            {
+                if (inventory.TryGetSlotEntity(PreviewDummy, slot, out var equipped))
+                    tint.SetTint(equipped.Value, color);
+            }
+        }
+
+        private void SetCombinedLoadoutCustomization(CombinedLoadoutChoice choice, ProtoId<LoadoutGroupPrototype> group, string name, string description, Color? color, string defaultName, string defaultDescription)
+        {
+            if (Profile == null || _playerManager.LocalSession == null)
+                return;
+
+            var collection = IoCManager.Instance;
+            if (collection == null)
+                return;
+
+            var location = choice.Locations.FirstOrDefault(location => location.Active && location.Group == group && location.Enabled);
+            if (!location.Active)
+                return;
+
+            // Store null when a value matches the item's default so it falls back gracefully.
+            var customName = NormalizeCustomText(name, defaultName);
+            var customDescription = NormalizeCustomText(description, defaultDescription);
+            var customColorTint = choice.Prototype.CustomColorTint && color.HasValue ? color.Value.ToHex() : null;
+
+            var roleLoadout = Profile.Loadouts.TryGetValue(location.Role, out var existing)
+                ? existing.Clone()
+                : new RoleLoadout(location.Role);
+
+            if (!roleLoadout.SelectedLoadouts.TryGetValue(location.Group, out var groupLoadouts))
+            {
+                groupLoadouts = new List<Loadout>();
+                roleLoadout.SelectedLoadouts[location.Group] = groupLoadouts;
+            }
+
+            var selected = groupLoadouts.FirstOrDefault(loadout => loadout.Prototype == choice.Prototype.ID);
+            if (selected == null)
+            {
+                RemoveConflictingLoadouts(roleLoadout, choice.Prototype);
+                roleLoadout.AddLoadout(location.Group, choice.Prototype.ID, _prototypeManager, customColorTint, customName, customDescription);
+            }
+            else
+            {
+                selected.CustomColorTint = customColorTint;
+                selected.CustomName = customName;
+                selected.CustomDescription = customDescription;
+            }
+
+            Profile = Profile.WithLoadout(roleLoadout);
+            SetDirty();
+            RefreshLoadouts();
+            ReloadPreview();
+        }
+
+        private static string? NormalizeCustomText(string value, string defaultValue)
+        {
+            var trimmed = value.Trim();
+            return string.IsNullOrEmpty(trimmed) || trimmed == defaultValue.Trim() ? null : trimmed;
+        }
+        #endregion
+
+        private void RemoveConflictingLoadouts(RoleLoadout roleLoadout, LoadoutPrototype selectedPrototype)
+        {
+            if (selectedPrototype.Equipment.Count == 0)
+                return;
+
+            var occupiedSlots = selectedPrototype.Equipment.Keys.ToHashSet();
+
+            foreach (var loadouts in roleLoadout.SelectedLoadouts.Values)
+            {
+                for (var i = loadouts.Count - 1; i >= 0; i--)
+                {
+                    if (!_prototypeManager.TryIndex(loadouts[i].Prototype, out LoadoutPrototype? loadoutProto))
+                        continue;
+
+                    if (loadoutProto.Equipment.Keys.Any(occupiedSlots.Contains))
+                        loadouts.RemoveAt(i);
+                }
+            }
+        }
+
+        private void RefreshSelectedLoadoutsList(Dictionary<ProtoId<LoadoutPrototype>, CombinedLoadoutChoice> choices, LoadoutSystem loadoutSystem)
+        {
+            SelectedLoadoutsList.DisposeAllChildren();
+
+            var showUnavailable = new CheckBox
+            {
+                Text = Loc.GetString("humanoid-profile-editor-show-unavailable"),
+                Pressed = _showUnavailableLoadouts,
+                Margin = new Thickness(0, 6, 0, 8),
+            };
+
+            showUnavailable.OnToggled += args =>
+            {
+                _showUnavailableLoadouts = args.Pressed;
+                RefreshLoadouts();
+            };
+
+            SelectedLoadoutsList.AddChild(showUnavailable);
+
+            foreach (var choice in choices.Values
+                .Where(choice => choice.Selected)
+                .OrderBy(choice => choice.CustomName ?? loadoutSystem.GetName(choice.Prototype))) // Pirate: loadout
+            {
+                var remove = new ContainerButton
+                {
+                    StyleBoxOverride = new StyleBoxEmpty(),
+                    MinSize = new Vector2(24, 24),
+                    SetSize = new Vector2(24, 24),
+                    ToolTip = Loc.GetString("loadout-window"),
+                };
+                remove.AddChild(new TextureRect
+                {
+                    TexturePath = "/Textures/_Pirate/Interface/VerbIcons/ChemRecipes/recipe-cancel.svg.192dpi.png",
+                    SetSize = new Vector2(16, 16),
+                    VerticalAlignment = VAlignment.Center,
+                    HorizontalAlignment = HAlignment.Center,
+                    Stretch = TextureRect.StretchMode.KeepAspectCentered,
+                });
+
+                remove.OnPressed += _ => SetCombinedLoadout(choice, false);
+
+                SelectedLoadoutsList.AddChild(new BoxContainer
+                {
+                    Orientation = BoxContainer.LayoutOrientation.Horizontal,
+                    HorizontalExpand = true,
+                    Margin = new Thickness(0, 0, 0, 4),
+                    Children =
+                    {
+                        remove,
+                        new Label
+                        {
+                            Text = choice.CustomName ?? loadoutSystem.GetName(choice.Prototype), // Pirate: loadout
+                            ClipText = true,
+                            HorizontalExpand = true,
+                            Margin = new Thickness(5, 0, 0, 0),
+                        },
+                    },
+                });
+            }
+        }
+
+        private Dictionary<string, BoxContainer> CreateLoadoutCategoryTabs()
+        {
+            var categories = CreateLoadoutCategoryNames();
+
+            var result = new Dictionary<string, BoxContainer>();
+            _loadoutSidebarSlots.Clear();
+
+            foreach (var category in categories)
+            {
+                var body = new BoxContainer
+                {
+                    Orientation = BoxContainer.LayoutOrientation.Vertical,
+                    Margin = new Thickness(5),
+                    HorizontalExpand = true,
+                };
+
+                var scroll = new ScrollContainer
+                {
+                    HScrollEnabled = false,
+                    HorizontalExpand = true,
+                    VerticalExpand = true,
+                    SizeFlagsStretchRatio = 4,
+                    Children =
+                    {
+                        body,
+                    },
+                };
+
+                var sidebarSlot = new BoxContainer
+                {
+                    Orientation = BoxContainer.LayoutOrientation.Vertical,
+                    HorizontalExpand = true,
+                    VerticalExpand = true,
+                    SizeFlagsStretchRatio = 1,
+                };
+
+                var row = new BoxContainer
+                {
+                    Orientation = BoxContainer.LayoutOrientation.Horizontal,
+                    HorizontalExpand = true,
+                    VerticalExpand = true,
+                    Children =
+                    {
+                        scroll,
+                        sidebarSlot,
+                    },
+                };
+
+                LoadoutSlotTabs.AddChild(row);
+                LoadoutSlotTabs.SetTabTitle(LoadoutSlotTabs.ChildCount - 1, GetLoadoutCategoryTitle(category));
+                _loadoutSidebarSlots[LoadoutSlotTabs.ChildCount - 1] = sidebarSlot;
+                result[category] = body;
+            }
+
+            MoveLoadoutSidebarToTab(LoadoutSlotTabs.CurrentTab);
+            return result;
+        }
+
+        private void MoveLoadoutSidebarToTab(int tab)
+        {
+            if (!_loadoutSidebarSlots.TryGetValue(tab, out var slot) || LoadoutSidebarScroll.Parent == slot)
+                return;
+
+            LoadoutSidebarScroll.Orphan();
+            slot.AddChild(LoadoutSidebarScroll);
+        }
+
+        private string GetLoadoutCategoryTitle(string category)
+        {
+            return Loc.TryGetString($"loadout-category-{category}", out var localized)
+                ? localized
+                : category;
+        }
+
+        private string GetLoadoutGroupCategory(LoadoutGroupPrototype group)
+        {
+            var key = $"{group.ID} {group.Name}".ToLowerInvariant();
+
+            if (key.Contains("backpack") || key.Contains("-back") || key.Contains(" back"))
+                return "Backpacks";
+
+            if (key.Contains("belt"))
+                return "Belt";
+
+            if (key.Contains("eyes") || key.Contains("glasses"))
+                return "Eyes";
+
+            if (key.Contains("gloves") || key.Contains("hands"))
+                return "Hands";
+
+            if (key.Contains("head"))
+                return "Head";
+
+            if (key.Contains("mask"))
+                return "Mask";
+
+            if (key.Contains("neck"))
+                return "Neck";
+
+            if (key.Contains("outer"))
+                return "Outer";
+
+            if (key.Contains("shoes"))
+                return "Shoes";
+
+            if (key.Contains("jumpsuit") || key.Contains("jumpskirt") || key.Contains("uniform") || key.Contains("clothing"))
+                return "Uniform";
+
+            return "Items";
+        }
+
+        private static string[] CreateLoadoutCategoryNames()
+        {
+            return new[]
+            {
+                "Backpacks",
+                "Belt",
+                "Eyes",
+                "Hands",
+                "Head",
+                "Items",
+                "Mask",
+                "Neck",
+                "Outer",
+                "Shoes",
+                "Uniform",
+            };
+        }
+
+        private sealed class CombinedLoadoutChoice
+        {
+            public CombinedLoadoutChoice(LoadoutPrototype prototype, string category)
+            {
+                Prototype = prototype;
+                Category = category;
+            }
+
+            public LoadoutPrototype Prototype { get; }
+            public string Category { get; }
+            public bool Selected;
+            public List<CombinedLoadoutLocation> Locations { get; } = new();
+            public bool Enabled => Locations.Any(location => location.Active && location.Enabled);
+
+            public bool IsSelectedInGroup(ProtoId<LoadoutGroupPrototype> group)
+            {
+                return Locations.Any(location => location.Active && location.Group == group && location.Selected);
+            }
+
+            public bool IsEnabledForGroup(ProtoId<LoadoutGroupPrototype> group)
+            {
+                return Locations.Any(location => location.Active && location.Group == group && location.Enabled);
+            }
+
+            public FormattedMessage? ReasonForGroup(ProtoId<LoadoutGroupPrototype> group)
+            {
+                return Locations.FirstOrDefault(location => location.Active && location.Group == group && location.Reason != null).Reason;
+            }
+
+            public string? CustomColorForGroup(ProtoId<LoadoutGroupPrototype> group)
+            {
+                return Locations.FirstOrDefault(location => location.Active && location.Group == group && location.CustomColorTint != null).CustomColorTint;
+            }
+
+            #region Pirate: loadout
+            /// <summary>
+            /// The custom name from any active location, if one was set. Used for the selected-loadouts list
+            /// which has no specific group context.
+            /// </summary>
+            public string? CustomName => Locations.FirstOrDefault(location => location.Active && location.CustomName != null).CustomName;
+
+            public string? CustomNameForGroup(ProtoId<LoadoutGroupPrototype> group)
+            {
+                return Locations.FirstOrDefault(location => location.Active && location.Group == group && location.CustomName != null).CustomName;
+            }
+
+            public string? CustomDescriptionForGroup(ProtoId<LoadoutGroupPrototype> group)
+            {
+                return Locations.FirstOrDefault(location => location.Active && location.Group == group && location.CustomDescription != null).CustomDescription;
+            }
+            #endregion
+        }
+
+        private enum CombinedLoadoutKind
+        {
+            Job,
+            Generic,
+        }
+
+        private readonly record struct CombinedLoadoutLocation(
+            string Role,
+            ProtoId<LoadoutGroupPrototype> Group,
+            bool Active,
+            bool Enabled,
+            bool Selected,
+            bool IsGeneric,
+            FormattedMessage? Reason,
+            string? CustomColorTint,
+            string? CustomName, // Pirate: loadout
+            string? CustomDescription) // Pirate: loadout
+        {
+            public CombinedLoadoutKind Kind => IsGeneric
+                ? CombinedLoadoutKind.Generic
+                : CombinedLoadoutKind.Job;
+        }
+
+        private readonly record struct CombinedLoadoutSection(
+            ProtoId<LoadoutGroupPrototype> Group,
+            string Title,
+            List<CombinedLoadoutChoice> Choices);
+
+        #endregion
 
         /// <summary>
         /// Reloads the entire dummy entity for preview.
@@ -1746,6 +1984,8 @@ namespace Content.Client.Lobby.UI
                         ReloadPreview();
 
                         UpdateJobPriorities();
+                        RefreshLoadouts(); // Pirate: loadout
+                        RefreshTraits(); // Pirate: port and modified DV traits UI
                         SetDirty();
                     };
 
@@ -1807,7 +2047,7 @@ namespace Content.Client.Lobby.UI
                     _jobPriorities.Add((job.ID, selector));
                     jobContainer.AddChild(selector);
                     jobContainer.AddChild(altJobSelector); // Pirate - Alternative Jobs
-                    jobContainer.AddChild(loadoutWindowBtn);
+                    // jobContainer.AddChild(loadoutWindowBtn); // Pirate: loadout
                     category.AddChild(jobContainer);
                 }
             }

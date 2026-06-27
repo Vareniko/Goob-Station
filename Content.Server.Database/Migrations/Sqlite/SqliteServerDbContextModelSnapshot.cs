@@ -1007,6 +1007,40 @@ namespace Content.Server.Database.Migrations.Sqlite
                     b.ToTable("poll_options", (string)null);
                 });
 
+            modelBuilder.Entity("Content.Server.Database.PollSeen", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("poll_seen_id");
+
+                    b.Property<Guid>("PlayerUserId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("player_user_id");
+
+                    b.Property<int>("PollId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("poll_id");
+
+                    b.Property<DateTime>("SeenAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("seen_at");
+
+                    b.HasKey("Id")
+                        .HasName("PK_poll_seen");
+
+                    b.HasIndex("PlayerUserId")
+                        .HasDatabaseName("IX_poll_seen_player_user_id");
+
+                    b.HasIndex("PollId")
+                        .HasDatabaseName("IX_poll_seen_poll_id");
+
+                    b.HasIndex("PollId", "PlayerUserId")
+                        .IsUnique();
+
+                    b.ToTable("poll_seen", (string)null);
+                });
+
             modelBuilder.Entity("Content.Server.Database.PollVote", b =>
                 {
                     b.Property<int>("Id")
@@ -1214,6 +1248,21 @@ namespace Content.Server.Database.Migrations.Sqlite
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("loadout_name");
+
+                    b.Property<string>("CustomColorTint")
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("custom_color_tint");
+
+                    #region Pirate: loadout
+                    b.Property<string>("CustomDescription")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("custom_description");
+
+                    b.Property<string>("CustomName")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("custom_name");
+                    #endregion
 
                     b.Property<int>("ProfileLoadoutGroupId")
                         .HasColumnType("INTEGER")
@@ -2259,6 +2308,28 @@ namespace Content.Server.Database.Migrations.Sqlite
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_poll_options_polls_poll_id");
+
+                    b.Navigation("Poll");
+                });
+
+            modelBuilder.Entity("Content.Server.Database.PollSeen", b =>
+                {
+                    b.HasOne("Content.Server.Database.Player", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerUserId")
+                        .HasPrincipalKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_poll_seen_player_player_user_id");
+
+                    b.HasOne("Content.Server.Database.Poll", "Poll")
+                        .WithMany()
+                        .HasForeignKey("PollId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_poll_seen_polls_poll_id");
+
+                    b.Navigation("Player");
 
                     b.Navigation("Poll");
                 });

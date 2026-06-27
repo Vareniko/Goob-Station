@@ -202,7 +202,9 @@
     - id: BingleSpawn #Goobstation - Bingle
     - id: SlaughterDemonMidround # Goobstation - Slaughter Demon
     - id: XenomorphsInfestation # WD EDIT
-    - id: GreyTideAntagMidround # Goobstation - New Midrounds
+    - id: SlasherSpawn # Goobstation - The Slasher
+    - id: TerrorSpidersSpawn # Pirate - Starlight terror spiders
+    - id: SpacePirates # Goobstation - you probably can read whom this rule spawns
     - id: SingulothKnightsMidround # Goobstation - New Midrounds
     #- id: DarkLordMidround # Goobstation - New Midrounds
     - id: MimeAssassinMidround # Goobstation - New Midrounds
@@ -211,7 +213,6 @@
     - id: TunnelClownMidround # Goobstation
     #- id: WraithMidround # Goobstation - Wraith
     #TODO when midrounds are "reviewed" by the chudmins add them back
-    #TODO When Slasher is Ready - id: SlasherSpawn # Goobstation - The Slasher
 
 - type: entity
   id: BaseStationEvent
@@ -354,10 +355,10 @@
     weight: 5
     duration: 1
     minimumPlayers: 10
-    eventType: Chaotic # Goobstation
+    eventType: FriendlySpawn # Pirate - closet skeletons are crew-aligned.
   # Goobstation
   - type: GameRule
-    chaosScore: 60
+    chaosScore: -10 # Pirate - friendly crew-aligned spawn.
   - type: RandomEntityStorageSpawnRule
     prototype: MobSkeletonCloset
 
@@ -700,6 +701,10 @@
   - type: GameRule
     chaosScore: 70
   - type: VentClogRule
+    weakReagents:
+    - Slime
+    - SpaceGlue
+    - SpaceLube
 
 - type: entity
   id: SlimesSpawn
@@ -848,7 +853,7 @@
     earliestStart: 60 # Pirate - was 35
     weight: 2.5 # Goobstation - was 5.5
     minimumPlayers: 50 # Goobstation - was 20
-    duration: 1
+    duration: 720 # Goobstation - required for custom nuke music. 720s to ensure loneop can hear the music and still have space for other midrounds incase of failure
     chaos: # Goobstation
       Hostile: 200
       Medical: 200
@@ -861,6 +866,7 @@
   - type: LoadMapRule
     gridPath: /Maps/Shuttles/ShuttleEvent/striker.yml
   - type: NukeopsRule
+    localePrefix: "loneop-" #Goobstation
     roundEndBehavior: Nothing
   - type: AntagSelection
     definitions:

@@ -11,6 +11,14 @@ loadout-group-technical-assistant-equipment = Оснащення технічн�
 
 
 loadout-group-passenger-head = Головний убір пасажира
+loadout-group-generic-head = Головний убір
+loadout-group-generic-mask = Маска
+loadout-group-generic-uniform = Комбінезон
+loadout-group-generic-neck = Шийна прикраса
+loadout-group-generic-shoes = Взуття
+loadout-group-generic-outerclothing = Верхній одяг
+loadout-group-belt = Пояс
+loadout-group-gloves = Рукавиці
 loadout-group-syndicate-suit = Уніформа синдикату
 loadout-group-interdyne-officer-head = Головний убір офіцера Інтердайну
 loadout-group-interdyne-head = Головний убір Інтердайну
@@ -24,12 +32,3 @@ loadout-group-interdyne-stamp-officer = Печатка офіцера Інтер
 loadout-group-interdyne-stamp-deputy = Печатка заступника офіцера Інтердайну
 loadout-group-interdyne-surgery = Хірургічне спорядження Інтердайну
 loadout-group-interdyne-key = Ключ шифрування Інтердайну
-
-loadout-group-captain-shoes = Взуття капітана
-loadout-group-hop-shoes = Взуття голови персоналу
-loadout-group-bartender-shoes = Взуття бармена
-loadout-group-chef-shoes = Взуття шеф-кухаря
-loadout-group-chaplain-shoes = Взуття капелана
-loadout-group-janitor-shoes = Взуття прибиральника
-loadout-group-musician-shoes = Взуття музиканта
-loadout-group-service-worker-shoes = Взуття сервісного працівника

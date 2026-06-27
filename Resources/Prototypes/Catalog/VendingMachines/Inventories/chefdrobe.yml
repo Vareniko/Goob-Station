@@ -25,7 +25,7 @@
     ClothingShoesColorBlack: 2
     ClothingShoesChef: 2
     ClothingBeltChef: 2
+    ClothingHeadHatBunnyearsChef: 2 # Pirate
     Eftpos: 4 #Pirate banking
-    ClothingUnderSocksChef: 2 # Pirate
   contrabandInventory:
     ToyFigurineChef: 1

@@ -1,16 +1,29 @@
+# SPDX-FileCopyrightText: 2026 Vareniko <213822582+Vareniko@users.noreply.github.com>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
 - type: gamePreset
-  id: PirateSecret
+  id: SecretTP
   alias:
-    - secret
-    - sekrit
-  name: "Секерет"
-  showInVote: true # Goob - Game Director
-  description: "Експериментальна версія секрету.Чесно я сам не впевнений, як воно працює..."
+    - secrettp
+    - stp
+  name: secrettp-title
+  description: secrettp-description
+  showInVote: true
   rules:
-    - Secret
+    - SecretTP
+    - PsionicEventsScheduler
+
+- type: gamePreset
+  id: SecretSalt
+  alias:
+    - secretsalt
+    - saltsecret
+  name: secretsalt-title
+  description: secretsalt-description
+  showInVote: true
+  rules:
+    - SecretSalt
     - PsionicEventsScheduler # Pirate
-    - SpaceTrafficControlFriendlyEventScheduler
-    - BasicRoundstartVariation
 
 - type: gamePreset
   id: PirateGreenshift
@@ -25,3 +38,48 @@
   - BasicRoundstartVariation
   - PsionicEventsScheduler # Pirate
   
+- type: gamePreset
+  id: PirateRelaxed
+  alias:
+  - relaxed
+  - relax
+  - розслаблений
+  name: "Розслаблений"
+  showInVote: true
+  description: "Спокійний режим з некритичними подіями."
+  rules:
+  - PirateRelaxedEventScheduler
+  - PirateRelaxedSubGamemodesRule
+  - BasicRoundstartVariation
+  - PsionicEventsScheduler
+
+- type: entityTable
+  id: PirateRelaxedEventsTable
+  table: !type:AllSelector
+    children:
+      - !type:NestedSelector
+        tableId: BasicCalmEventsTable
+      - !type:NestedSelector
+        tableId: CargoGiftsTable
+      - !type:NestedSelector
+        tableId: CalmPestEventsTable
+      - !type:NestedSelector
+        tableId: SpicyPestEventsTable
+      - id: ParadoxCloneSpawn
+
+- type: entity
+  id: PirateRelaxedEventScheduler
+  parent: BaseGameRule
+  components:
+  - type: BasicStationEventScheduler
+    scheduledGameRules: !type:NestedSelector
+      tableId: PirateRelaxedEventsTable
+
+- type: entity
+  id: PirateRelaxedSubGamemodesRule
+  parent: BaseGameRule
+  components:
+  - type: SubGamemodes
+    rules:
+    - id: Devil
+      prob: 0.3

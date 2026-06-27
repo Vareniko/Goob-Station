@@ -126,11 +126,11 @@
   - CaptainBackpack
   - CaptainOuterClothing
   - CommandSelfDefense # Pirate
+  - TrinketsCommand # Pirate
   - Survival
   - Trinkets
   - Animals
   - GroupSpeciesBreathTool
-  - CaptainShoes # Pirate
   # Goobstation - EE Plasmeme Change.
   - CaptainEnvirohelm
   - CaptainEnvirosuit
@@ -146,13 +146,13 @@
   - HoPJumpsuit
   - HoPBackpack
   - HoPOuterClothing
-  - Glasses
+ #- Glasses # Pirate
   - CommandSelfDefense # Pirate
+  - TrinketsCommand # Pirate
   - Survival
   - Trinkets
   - Animals
   - GroupSpeciesBreathTool
-  - HoPShoes # Pirate
   # Goobstation - EE Plasmeme Change.
   - HoPEnvirohelm
   - HoPEnvirosuit
@@ -184,7 +184,7 @@
   - PiratePassengerNeck
  # Pirate wardrobe end ^^^
   #- PassengerNeck # Pirate wardrobe
-  - PassengerFace 
+  - PassengerFace
   - PassengerGloves
   #- PassengerOuterClothing # Pirate wardrobe
   #- PassengerShoes # Pirate wardrobe
@@ -211,7 +211,6 @@
   - Trinkets
   - Animals
   - GroupSpeciesBreathTool
-  - BartenderShoes # Pirate
   # Goobstation - EE Plasmeme Change.
   - BartenderEnvirohelm
   - BartenderEnvirosuit
@@ -228,7 +227,6 @@
   - Trinkets
   - Animals
   - GroupSpeciesBreathTool
-  - ServiceWorkerShoes # Pirate
   # Goobstation - EE Plasmeme Change.
   - ServiceWorkerEnvirohelm
   - ServiceWorkerEnvirosuit
@@ -248,7 +246,6 @@
   - Trinkets
   - Animals
   - GroupSpeciesBreathTool
-  - ChefShoes # Pirate
   # Goobstation - EE Plasmeme Change.
   - ChefEnvirohelm
   - ChefEnvirosuit
@@ -302,7 +299,6 @@
   - Trinkets
   - Animals
   - GroupSpeciesBreathTool
-  - ChaplainShoes # Pirate
   # Goobstation - EE Plasmeme Change.
   - ChaplainEnvirohelm
   - ChaplainEnvirosuit
@@ -323,7 +319,6 @@
   - JanitorPlunger
   - Animals
   - GroupSpeciesBreathTool
-  - JanitorShoes # Pirate
   # Goobstation - EE Plasmeme Change.
   - JanitorEnvirohelm
   - JanitorEnvirosuit
@@ -400,7 +395,6 @@
   - Instruments
   - Animals
   - GroupSpeciesBreathTool
-  - MusicianShoes # Pirate
   # Goobstation - EE Plasmeme Change.
   - MusicianEnvirohelm
   - MusicianEnvirosuit
@@ -419,6 +413,7 @@
   - QuartermasterShoes
   - Glasses
   - CommandSelfDefense # Pirate
+  - TrinketsCommand # Pirate
   - Survival
   - Trinkets
   - Animals
@@ -478,6 +473,8 @@
   - ChiefEngineerOuterClothing
   - ChiefEngineerShoes
   - CommandSelfDefense # Pirate
+  - TrinketsCommand # Pirate
+  - TrinketsEngineering # Pirate
   - SurvivalExtended
   - Trinkets
   - Animals
@@ -494,6 +491,7 @@
   - TechnicalAssistantJumpsuit
   - StationEngineerBackpack
   - TechnicalAssistantEquipment # Pirate
+  - TrinketsEngineering # Pirate
   - SurvivalExtended
   - Trinkets
   - Animals
@@ -514,6 +512,7 @@
   - StationEngineerShoes
   - StationEngineerID
   - StationEngineerEquipment # Pirate
+  - TrinketsEngineering # Pirate
   - SurvivalExtended
   - Trinkets
   - Animals
@@ -533,6 +532,7 @@
   - AtmosphericTechnicianOuterClothing
   - AtmosphericTechnicianShoes
   - StationEngineerEquipment # Pirate
+  - TrinketsEngineering # Pirate
   - SurvivalExtended
   - Trinkets
   - Animals
@@ -556,6 +556,7 @@
   - ResearchDirectorShoes
   - MantisEyes
   - CommandSelfDefense # Pirate
+  - TrinketsCommand # Pirate
   - Survival
   - Trinkets
   - Animals
@@ -618,6 +619,7 @@
   - HeadofSecurityShoes # Goobstation edit
   - SurvivalSecurity
   - Trinkets
+  - TrinketsCommand
   - SecurityStar
   - Animals
   - GroupSpeciesBreathToolSecurity
@@ -727,6 +729,8 @@
   - ChiefMedicalOfficerShoes
   - MedicalEyewear
   - CommandSelfDefense # Pirate
+  - TrinketsCommand # Pirate
+  - TrinketsMedical # Pirate
   - SurvivalMedical
   - Trinkets
   - Animals
@@ -751,6 +755,7 @@
   - MedicalEyewear
   - SurvivalMedical
   - Trinkets
+  - TrinketsMedical # Pirate
   - Animals
   - GroupSpeciesBreathToolMedical
   # Goobstation - EE Plasmeme Change.
@@ -767,6 +772,7 @@
   - MedicalEyewear
   - SurvivalMedical
   - Trinkets
+  - TrinketsMedical # Pirate
   - Animals
   - GroupSpeciesBreathToolMedical
   # Goobstation - EE Plasmeme Change.
@@ -787,6 +793,7 @@
   - MedicalShoes
   - SurvivalMedical
   - Trinkets
+  - TrinketsMedical # Pirate
   - Animals
   - GroupSpeciesBreathToolMedical
   # Goobstation - EE Plasmeme Change.
@@ -808,6 +815,7 @@
   - MedicalEyewear
   - SurvivalMedical
   - Trinkets
+  - TrinketsMedical # Pirate
   - Animals
   - GroupSpeciesBreathToolMedical
   # Goobstation - EE Plasmeme Change.
@@ -859,6 +867,7 @@
   - Glasses
   - Survival
   - Trinkets
+  - TrinketsMedical # Pirate
   - Animals
   - GroupSpeciesBreathTool
   # Goobstation - EE Plasmeme Change.
