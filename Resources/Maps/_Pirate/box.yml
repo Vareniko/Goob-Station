@@ -4,8 +4,8 @@ meta:
   engineVersion: 270.1.0
   forkId: ""
   forkVersion: ""
-  time: 08/01/2026 03:59:18
-  entityCount: 30632
+  time: 08/01/2026 04:03:11
+  entityCount: 30636
 maps:
 - 1
 grids:
@@ -14376,7 +14376,7 @@ entities:
       pos: -13.5,18.5
       parent: 2
     - type: Door
-      secondsUntilStateChange: -227347.38
+      secondsUntilStateChange: -227383.14
       state: Opening
     - type: DeviceLinkSource
       lastSignals:
@@ -15800,7 +15800,7 @@ entities:
       pos: 35.5,-56.5
       parent: 2
     - type: Door
-      secondsUntilStateChange: -88339.945
+      secondsUntilStateChange: -88375.71
       state: Opening
     - type: DeviceLinkSource
       lastSignals:
@@ -76918,6 +76918,40 @@ entities:
     - type: Transform
       pos: 66.39981,-80.5017
       parent: 2
+- proto: ClothingShoesColorBlack
+  entities:
+  - uid: 1190
+    components:
+    - type: Transform
+      parent: 1189
+    - type: Physics
+      canCollide: False
+    - type: InsideEntityStorage
+      storage: 1189
+  - uid: 1191
+    components:
+    - type: Transform
+      parent: 1189
+    - type: Physics
+      canCollide: False
+    - type: InsideEntityStorage
+      storage: 1189
+  - uid: 1199
+    components:
+    - type: Transform
+      parent: 1198
+    - type: Physics
+      canCollide: False
+    - type: InsideEntityStorage
+      storage: 1198
+  - uid: 1200
+    components:
+    - type: Transform
+      parent: 1198
+    - type: Physics
+      canCollide: False
+    - type: InsideEntityStorage
+      storage: 1198
 - proto: ClothingShoesFlippers
   entities:
   - uid: 11302
@@ -79587,7 +79621,7 @@ entities:
       pos: 28.5,-5.5
       parent: 2
     - type: Door
-      secondsUntilStateChange: -254509.64
+      secondsUntilStateChange: -254545.4
       state: Opening
   - uid: 11643
     components:
@@ -89399,10 +89433,6 @@ entities:
         1061:
           position: 1,0
           _rotation: South
-    - type: UserInterface
-      actors:
-        enum.StorageUiKey.Key:
-        - invalid
     - type: ContainerContainer
       containers:
         storagebase: !type:Container
@@ -159705,9 +159735,6 @@ entities:
     - type: Transform
       pos: 6.5,26.5
       parent: 2
-    - type: DeviceNetwork
-      configurators:
-      - invalid
   - uid: 40736
     components:
     - type: Transform
@@ -160761,9 +160788,6 @@ entities:
       rot: 3.141592653589793 rad
       pos: 7.5,23.5
       parent: 2
-    - type: DeviceNetwork
-      configurators:
-      - invalid
     - type: SignalSwitch
       state: True
     - type: DeviceLinkSource
@@ -194867,7 +194891,7 @@ entities:
       parent: 2
 - proto: WardrobePrisonFilled
   entities:
-  - uid: 40842
+  - uid: 1189
     components:
     - type: Transform
       pos: -6.5,27.5
@@ -194876,23 +194900,23 @@ entities:
       air:
         volume: 200
         immutable: False
-        temperature: 293.14584
+        temperature: 293.14673
         moles:
-          Oxygen: 1.3595816
-          Nitrogen: 5.1146173
+          Oxygen: 1.7459903
+          Nitrogen: 6.568249
     - type: ContainerContainer
       containers:
         entity_storage: !type:Container
           showEnts: False
           occludes: True
           ents:
-          - invalid
-          - invalid
+          - 1190
+          - 1191
         paper_label: !type:ContainerSlot
           showEnts: False
           occludes: True
           ent: null
-  - uid: 40844
+  - uid: 1198
     components:
     - type: Transform
       pos: -5.5,27.5
@@ -194911,8 +194935,8 @@ entities:
           showEnts: False
           occludes: True
           ents:
-          - invalid
-          - invalid
+          - 1199
+          - 1200
         paper_label: !type:ContainerSlot
           showEnts: False
           occludes: True
