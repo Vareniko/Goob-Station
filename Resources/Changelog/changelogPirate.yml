@@ -3821,3 +3821,69 @@ Entries:
         прогрес.
   id: 372
   time: '2026-08-01T17:41:08.0000000+00:00'
+- author: Vareniko
+  changes:
+    - type: Fix
+      message: У пояс інструктора СБ тепер можна складувати речі
+    - type: Fix
+      message: 'Інструктор СБ, Шахтар, Радіохост і Вірусолог тепер отримують зарплатню '
+  id: 373
+  time: '2026-08-01T19:55:39.0000000+00:00'
+- author: Vareniko
+  changes:
+    - type: Tweak
+      message: Змінені вимоги щодо прадодавців більшості ролей (Тепер лор канон)
+  id: 374
+  time: '2026-08-01T19:57:39.0000000+00:00'
+- author: v0idRift
+  changes:
+    - type: Tweak
+      message: ГШР і Дед Сквад тепер можуть бути лише людьми.
+  id: 375
+  time: '2026-08-01T20:13:41.0000000+00:00'
+- author: AgentMaper
+  changes:
+    - type: Tweak
+      message: Piramide Island переназвана в Piramide Station
+    - type: Tweak
+      message: Оновлена мапа Perdition Island
+    - type: Fix
+      message: проблеми зі світлом на Perdition Island
+  id: 376
+  time: '2026-08-01T20:50:00.0000000+00:00'
+- author: CyberLanos
+  changes:
+    - type: Fix
+      message: запам'ятовування зовнішності не блочиться всіма масками та шапками
+    - type: Fix
+      message: неправильне відображення маркувань в меню слайм морфізму
+  id: 377
+  time: '2026-08-01T21:57:28.0000000+00:00'
+- author: v0idRift
+  changes:
+    - type: Add
+      message: Додано превʼю станцій у голосування за мапу.
+    - type: Tweak
+      message: Мапи ТП у голосуванні позначаються піратським прапором замість суфікса.
+  id: 378
+  time: '2026-08-02T09:58:35.0000000+00:00'
+- author: v0idRift
+  changes:
+    - type: Fix
+      message: Оні тепер можуть використовувати інженерну ракетницю ГІ.
+  id: 379
+  time: '2026-08-02T10:38:13.0000000+00:00'
+- author: v0idRift
+  changes:
+    - type: Tweak
+      message: >-
+        Повністю заковані цілі тепер можна конвертувати одним культистом крові
+        або космосу.
+  id: 380
+  time: '2026-08-02T10:40:20.0000000+00:00'
+- author: v0idRift
+  changes:
+    - type: Fix
+      message: Піратський прапор у голосуванні за мапу знову відображається коректно.
+  id: 381
+  time: '2026-08-02T11:19:52.0000000+00:00'
