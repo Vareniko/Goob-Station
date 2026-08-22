@@ -157,6 +157,8 @@
   - LoadoutHandsGlovesEnviroglovesEvening
   - LoadoutHandsClothWrap
   - ClothingHandsTacticalMaidGlovesLoadout
+  subgroups: # Pirate: player cosmetics expansion
+  - PiratePassengerExpansionHands
 
 - type: loadoutGroup
   id: PirateEEGenericMask
@@ -165,6 +167,8 @@
   loadouts:
   - LoadoutMaskBandWhite
   - LoadoutMaskNeckGaiterWhite
+  subgroups: # Pirate: player cosmetics expansion
+  - PiratePassengerExpansionMask
 
 - type: loadoutGroup
   id: PirateGenericPassengerJumpsuit
@@ -425,6 +429,10 @@
   - WardrobeMNKGymBra
   - WardrobeMNKUnderGarment
   - WardrobeMNKOfficeSkirt
+  subgroups:
+  - PiratePassengerPortedUniform
+  - PiratePassengerFreshUniform
+  - PiratePassengerExpansionUniform
 
 - type: loadoutGroup
   id: PiratePassengerNeck
@@ -448,6 +456,10 @@
   - WardrobePonchoSmallPink
   - WardrobePonchoArctic
   - WardrobePonchoBlack
+  subgroups:
+  - PiratePassengerPortedNeck
+  - PiratePassengerFreshNeck
+  - PiratePassengerExpansionNeck
 
 
 - type: loadoutGroup
@@ -495,6 +507,10 @@
   - WardrobeBandBlue
   - WardrobeBandBlack
   - WardrobeConductorHat
+  subgroups:
+  - PiratePassengerPortedHead
+  - PiratePassengerFreshHead
+  - PiratePassengerExpansionHead
 
 
 - type: loadoutGroup
@@ -518,6 +534,9 @@
   - WardrobeSlippersLizard
   - WardrobeShoesTourist
   - WardrobeSandals
+  subgroups:
+  - PiratePassengerPortedShoes
+  - PiratePassengerFreshShoes
 
 - type: loadoutGroup
   id: PiratePassengerOuterClothing
@@ -556,6 +575,10 @@
   - WardrobeFlannelGreen
   - WardrobeFlannelRed
   - WardrobeCoatSpaceAsshole
+  subgroups:
+  - PiratePassengerPortedOuter
+  - PiratePassengerFreshOuter
+  - PiratePassengerExpansionOuter
 
 - type: loadoutGroup
   id: PirateEEGenericHead
